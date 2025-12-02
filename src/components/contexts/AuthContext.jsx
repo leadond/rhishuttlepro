@@ -14,6 +14,34 @@ const AuthContext = createContext({});
 
 export const useAuth = () => useContext(AuthContext);
 
+// Helper to get master admin emails from environment variable
+const getMasterAdminEmails = () => {
+  const envEmails = import.meta.env.VITE_MASTER_ADMIN_EMAILS || '';
+  return envEmails.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+};
+
+// Helper to merge roles with master_admin if user email matches
+const mergeRolesWithMasterAdmin = (email, dbRoles) => {
+  const masterAdminEmails = getMasterAdminEmails();
+  const normalizedEmail = (email || '').toLowerCase();
+  
+  // Check if user's email is in master admin list
+  if (masterAdminEmails.includes(normalizedEmail)) {
+    // Ensure master_admin role is included
+    const roles = Array.isArray(dbRoles) ? [...dbRoles] : [];
+    if (!roles.includes('master_admin')) {
+      roles.push('master_admin');
+    }
+    // Also ensure admin role for full access
+    if (!roles.includes('admin')) {
+      roles.push('admin');
+    }
+    return roles;
+  }
+  
+  return Array.isArray(dbRoles) ? dbRoles : [];
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +56,10 @@ export const AuthProvider = ({ children }) => {
         try {
           // Fetch user from database to get roles
           const dbUser = await UserEntity.filter({ email: firebaseUser.email });
-          const userRoles = dbUser && dbUser.length > 0 ? dbUser[0].roles || [] : [];
+          const dbRoles = dbUser && dbUser.length > 0 ? dbUser[0].roles || [] : [];
+          
+          // Merge database roles with master_admin if email matches env var
+          const userRoles = mergeRolesWithMasterAdmin(firebaseUser.email, dbRoles);
 
           // Map Firebase user to our app's user structure
           setUser({
@@ -36,17 +67,20 @@ export const AuthProvider = ({ children }) => {
             email: firebaseUser.email,
             full_name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
             avatar_url: firebaseUser.photoURL,
-            roles: userRoles
+            roles: userRoles,
+            db_user_id: dbUser && dbUser.length > 0 ? dbUser[0].id : null,
+            organization_id: dbUser && dbUser.length > 0 ? dbUser[0].organization_id : null
           });
         } catch (error) {
           console.error('Error fetching user roles:', error);
-          // Fallback to empty roles if fetch fails
+          // Fallback - still check for master admin email
+          const fallbackRoles = mergeRolesWithMasterAdmin(firebaseUser.email, []);
           setUser({
             id: firebaseUser.uid,
             email: firebaseUser.email,
             full_name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
             avatar_url: firebaseUser.photoURL,
-            roles: []
+            roles: fallbackRoles
           });
         }
       } else {
