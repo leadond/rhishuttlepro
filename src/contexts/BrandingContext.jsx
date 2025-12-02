@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
 import { Branding } from '@/api/appEntities';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 // Convert hex color to HSL values (without hsl() wrapper - just "h s% l%")
 function hexToHSL(hex) {
@@ -151,6 +152,8 @@ const BrandingContext = createContext({
 
 // Branding provider component
 export function BrandingProvider({ children }) {
+  const { organizationId, loading: orgLoading } = useOrganization();
+  
   const [brandingConfig, setBrandingConfig] = useState({
     ...defaultBranding,
     // Start with environment variables as initial values
@@ -167,10 +170,23 @@ export function BrandingProvider({ children }) {
     loading: true
   });
 
-  // Function to load branding from database
+  // Function to load branding from database (filtered by organization if available)
   const loadBrandingFromDatabase = useCallback(async () => {
     try {
-      const brandingList = await Branding.list();
+      let brandingList;
+      
+      // If we have an organization, filter branding by organization_id
+      if (organizationId) {
+        brandingList = await Branding.filter({ organization_id: organizationId });
+      } else {
+        // Fallback: try to get global branding (no organization_id)
+        brandingList = await Branding.filter({ organization_id: null });
+        
+        // If no global branding, get the first one as fallback
+        if (!brandingList || brandingList.length === 0) {
+          brandingList = await Branding.list();
+        }
+      }
       
       if (brandingList && brandingList.length > 0) {
         const dbBranding = brandingList[0];
@@ -221,10 +237,12 @@ export function BrandingProvider({ children }) {
     }
   }, []);
 
-  // Load branding on mount
+  // Load branding when organization changes
   useEffect(() => {
-    loadBrandingFromDatabase();
-  }, [loadBrandingFromDatabase]);
+    if (!orgLoading) {
+      loadBrandingFromDatabase();
+    }
+  }, [loadBrandingFromDatabase, organizationId, orgLoading]);
 
   // Refresh function to reload branding from database
   const refresh = useCallback(() => {

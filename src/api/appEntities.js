@@ -50,6 +50,7 @@ export const Driver = createEntity('Driver');
 export const Webhook = createEntity('Webhook');
 export const FeatureFlag = createEntity('FeatureFlag');
 export const Branding = createEntity('Branding');
+export const Organization = createEntity('Organization');
 
 // For Auth, we use the Firebase Auth Context static helper
 export const User = UserAuthStatic;

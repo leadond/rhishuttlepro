@@ -14,7 +14,10 @@ import {
   X,
   BookOpen,
   HelpCircle,
-  Car
+  Car,
+  Building2,
+  ChevronDown,
+  Crown
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,7 +27,17 @@ import { SimulationProvider } from "@/components/contexts/SimulationContext";
 import { FeatureFlagsProvider } from "@/components/contexts/FeatureFlagsContext";
 import { useAuth } from "@/components/contexts/AuthContext";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 const allNavigationItems = [
   {
@@ -76,6 +89,7 @@ const SidebarContent = ({ currentUser, accessibleNavItems }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const branding = useBranding();
+  const { organization, allOrganizations, isMasterAdmin, switchOrganization } = useOrganization();
 
   const handleLogout = async () => {
     try {
@@ -110,6 +124,65 @@ const SidebarContent = ({ currentUser, accessibleNavItems }) => {
           </div>
         </div>
       </div>
+
+      {/* Organization Switcher for Master Admin */}
+      {isMasterAdmin && allOrganizations.length > 0 && (
+        <div className="px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-purple-50 to-indigo-50">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between bg-white border-purple-200 hover:bg-purple-50"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Building2 className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <span className="truncate text-sm">
+                    {organization?.name || 'Select Organization'}
+                  </span>
+                </div>
+                <ChevronDown className="w-4 h-4 text-purple-600 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="start">
+              <DropdownMenuLabel className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-purple-600" />
+                Switch Organization
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allOrganizations.map((org) => (
+                <DropdownMenuItem
+                  key={org.id}
+                  onClick={() => switchOrganization(org.id)}
+                  className={organization?.id === org.id ? 'bg-purple-50' : ''}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <Building2 className="w-4 h-4 text-slate-500" />
+                    <span className="truncate flex-1">{org.name}</span>
+                    {organization?.id === org.id && (
+                      <Badge className="bg-purple-100 text-purple-800 text-xs">Active</Badge>
+                    )}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <p className="text-xs text-purple-700 mt-1.5 text-center">
+            Viewing as Master Admin
+          </p>
+        </div>
+      )}
+
+      {/* Current Organization Display for Hotel Admins */}
+      {!isMasterAdmin && organization && (
+        <div className="px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-cyan-50">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-blue-900 truncate">
+              {organization.name}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
         <div className="mb-6 px-2">

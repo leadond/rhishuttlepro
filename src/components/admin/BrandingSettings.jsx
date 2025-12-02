@@ -7,21 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Palette, 
-  Building, 
-  Image, 
-  Save, 
-  RefreshCw, 
-  Eye, 
+import {
+  Palette,
+  Building,
+  Image,
+  Save,
+  RefreshCw,
+  Eye,
   AlertCircle,
   CheckCircle2,
   Mail,
   Phone,
-  Globe
+  Globe,
+  Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBranding } from '@/contexts/BrandingContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 const defaultBrandingConfig = {
   app_name: 'Shuttle Pro',
@@ -44,10 +46,13 @@ export default function BrandingSettings() {
   const [brandingId, setBrandingId] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
   const { refresh: refreshBrandingContext } = useBranding();
+  const { organization, organizationId, loading: orgLoading } = useOrganization();
 
   useEffect(() => {
-    loadBranding();
-  }, []);
+    if (!orgLoading) {
+      loadBranding();
+    }
+  }, [organizationId, orgLoading]);
 
   useEffect(() => {
     if (originalBranding) {
@@ -59,7 +64,18 @@ export default function BrandingSettings() {
   const loadBranding = async () => {
     try {
       setLoading(true);
-      const brandingList = await Branding.list();
+      
+      // Filter by organization_id if available
+      let brandingList;
+      if (organizationId) {
+        brandingList = await Branding.filter({ organization_id: organizationId });
+      } else {
+        // Fallback to global branding or first branding record
+        brandingList = await Branding.filter({ organization_id: null });
+        if (!brandingList || brandingList.length === 0) {
+          brandingList = await Branding.list();
+        }
+      }
       
       if (brandingList && brandingList.length > 0) {
         const existingBranding = brandingList[0];
@@ -94,10 +110,16 @@ export default function BrandingSettings() {
     try {
       setSaving(true);
       
+      // Include organization_id in branding data
+      const brandingData = {
+        ...branding,
+        organization_id: organizationId || null,
+      };
+      
       if (brandingId) {
-        await Branding.update(brandingId, branding);
+        await Branding.update(brandingId, brandingData);
       } else {
-        const created = await Branding.create(branding);
+        const created = await Branding.create(brandingData);
         setBrandingId(created.id);
       }
       
@@ -135,7 +157,7 @@ export default function BrandingSettings() {
     if (brandingId) {
       try {
         setSaving(true);
-        await Branding.update(brandingId, defaultBrandingConfig);
+        await Branding.update(brandingId, { ...defaultBrandingConfig, organization_id: organizationId || null });
         setOriginalBranding({ ...defaultBrandingConfig });
         setHasChanges(false);
         
@@ -168,6 +190,25 @@ export default function BrandingSettings() {
 
   return (
     <div className="space-y-6">
+      {/* Organization Info Banner */}
+      {organization && (
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="font-medium text-blue-900">
+                  Managing branding for: <span className="font-bold">{organization.name}</span>
+                </p>
+                <p className="text-sm text-blue-700">
+                  Changes will only affect this organization's branding
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Info Card */}
       <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
         <CardContent className="p-6">

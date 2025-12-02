@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Plus, Edit, Trash2, RefreshCw, Wrench, FileText } from 'lucide-react';
+import { Truck, Plus, Edit, Trash2, RefreshCw, Wrench, FileText, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export default function VehicleManagement() {
+  const { organization, organizationId, loading: orgLoading } = useOrganization();
   const [vehicles, setVehicles] = useState([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,18 +28,30 @@ export default function VehicleManagement() {
   });
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!orgLoading) {
+      loadData();
+    }
+  }, [organizationId, orgLoading]);
 
   const loadData = async () => {
     try {
-      const [vehiclesData, logsData] = await Promise.all([
-        Vehicle.list(),
-        MaintenanceLog.list('-created_date', 100)
-      ]);
+      let vehiclesData, logsData;
       
-      setVehicles(vehiclesData);
-      setMaintenanceLogs(logsData);
+      // Filter by organization if available
+      if (organizationId) {
+        [vehiclesData, logsData] = await Promise.all([
+          Vehicle.filter({ organization_id: organizationId }),
+          MaintenanceLog.filter({ organization_id: organizationId })
+        ]);
+      } else {
+        [vehiclesData, logsData] = await Promise.all([
+          Vehicle.list(),
+          MaintenanceLog.list('-created_date', 100)
+        ]);
+      }
+      
+      setVehicles(vehiclesData || []);
+      setMaintenanceLogs(logsData || []);
       setLoading(false);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -53,7 +67,13 @@ export default function VehicleManagement() {
     }
 
     try {
-      await Vehicle.create(formData);
+      // Include organization_id when creating vehicle
+      const vehicleData = {
+        ...formData,
+        organization_id: organizationId || null,
+      };
+      
+      await Vehicle.create(vehicleData);
       toast.success(`Vehicle ${formData.shuttle_number} added successfully!`);
       setShowAddDialog(false);
       setFormData({
@@ -113,6 +133,25 @@ export default function VehicleManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Organization Info Banner */}
+      {organization && (
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="font-medium text-blue-900">
+                  Managing vehicles for: <span className="font-bold">{organization.name}</span>
+                </p>
+                <p className="text-sm text-blue-700">
+                  {vehicles.length} vehicle{vehicles.length !== 1 ? 's' : ''} in fleet
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Fleet Management</h3>

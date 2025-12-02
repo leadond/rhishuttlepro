@@ -4,9 +4,10 @@ import { UserEntity } from "@/api/appEntities";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { UserCog, Shield, Truck, Plus, Trash2, RefreshCw, Crown, Tv } from 'lucide-react';
+import { UserCog, Shield, Truck, Plus, Trash2, RefreshCw, Crown, Tv, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 // Master Admin only role - system-wide configuration access
 const MASTER_ADMIN_ROLE = {
@@ -26,14 +27,17 @@ const STANDARD_ROLES = [
 ];
 
 export default function RolesManagement({ isOwner }) {
+  const { organization, organizationId, loading: orgLoading } = useOrganization();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    if (!orgLoading) {
+      loadUsers();
+    }
+  }, [organizationId, orgLoading]);
 
   // Build available roles based on whether current user is Master Admin
   const AVAILABLE_ROLES = isOwner
@@ -42,12 +46,23 @@ export default function RolesManagement({ isOwner }) {
 
   const loadUsers = async () => {
     try {
-      const allUsers = await UserEntity.list();
+      let allUsers;
+      
+      // Filter by organization if available (and not master admin viewing all)
+      if (organizationId && !isOwner) {
+        allUsers = await UserEntity.filter({ organization_id: organizationId });
+      } else if (organizationId) {
+        // Master admin viewing specific organization
+        allUsers = await UserEntity.filter({ organization_id: organizationId });
+      } else {
+        // Master admin with no org selected - show all users
+        allUsers = await UserEntity.list();
+      }
       
       // If not master admin, filter out users with master_admin role
       const filteredUsers = isOwner
-        ? allUsers
-        : allUsers.filter(u => !u.roles?.includes('master_admin'));
+        ? (allUsers || [])
+        : (allUsers || []).filter(u => !u.roles?.includes('master_admin'));
       
       setUsers(filteredUsers);
       setLoading(false);
@@ -93,6 +108,25 @@ export default function RolesManagement({ isOwner }) {
 
   return (
     <div className="space-y-6">
+      {/* Organization Info Banner */}
+      {organization && (
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="font-medium text-blue-900">
+                  Managing users for: <span className="font-bold">{organization.name}</span>
+                </p>
+                <p className="text-sm text-blue-700">
+                  {users.length} user{users.length !== 1 ? 's' : ''} in this organization
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Role Hierarchy Info */}
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
         <h4 className="font-semibold text-slate-900 mb-2">Role Hierarchy</h4>
@@ -167,7 +201,7 @@ export default function RolesManagement({ isOwner }) {
                           <Badge
                             key={role.value}
                             className={`${hasRole ? role.color : 'bg-slate-100 text-slate-400 border-slate-200'} cursor-pointer transition-all`}
-                            onClick={() => !isSystemOwner && toggleRole(user, role.value)}
+                            onClick={() => toggleRole(user, role.value)}
                           >
                             <Icon className="w-3 h-3 mr-1" />
                             {role.label}

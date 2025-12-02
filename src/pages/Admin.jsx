@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserCog, Shield, Truck, Plus, Trash2, Edit, Check, X, AlertCircle, Webhook as WebhookIcon, Key, Copy, RefreshCw, CheckCircle2, CheckCircle, Activity, Palette } from "lucide-react";
+import { Users, UserCog, Shield, Truck, Plus, Trash2, Edit, Check, X, AlertCircle, Webhook as WebhookIcon, Key, Copy, RefreshCw, CheckCircle2, CheckCircle, Activity, Palette, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { createUser } from "@/api/functions";
@@ -17,7 +17,9 @@ import RolesManagement from "../components/admin/RolesManagement";
 import VehicleManagement from "../components/admin/VehicleManagement";
 import CustomerOnboarding from "../components/admin/CustomerOnboarding";
 import BrandingSettings from "../components/admin/BrandingSettings";
+import OrganizationManagement from "../components/admin/OrganizationManagement";
 import { useAuth } from "@/components/contexts/AuthContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 export default function Admin() {
   const [users, setUsers] = useState([]);
@@ -384,6 +386,14 @@ export default function Admin() {
               {isMasterAdmin && (
                 <>
                   <Button
+                    onClick={() => setSelectedTab('organizations')}
+                    variant="ghost"
+                    className={`flex-1 h-11 font-semibold ${selectedTab === 'organizations' ? 'bg-purple-700 text-white' : 'text-purple-600 bg-purple-50'}`}
+                  >
+                    <Building2 className="w-4 h-4 mr-2" />
+                    Organizations
+                  </Button>
+                  <Button
                     onClick={() => setSelectedTab('webhooks')}
                     variant="ghost"
                     className={`flex-1 h-11 font-semibold ${selectedTab === 'webhooks' ? 'bg-purple-700 text-white' : 'text-purple-600 bg-purple-50'}`}
@@ -622,6 +632,11 @@ export default function Admin() {
               <VehicleManagement />
             </CardContent>
           </Card>
+        )}
+
+        {/* Organizations Tab - Master Admin Only */}
+        {selectedTab === 'organizations' && isMasterAdmin && (
+          <OrganizationManagement />
         )}
 
         {selectedTab === 'features' && isMasterAdmin && (

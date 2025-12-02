@@ -6,18 +6,21 @@ import { ThemeProvider } from "@/components/ui/theme-provider"
 import { AuthProvider } from "@/components/contexts/AuthContext";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 
 function App() {
   return (
     <AuthProvider>
-      <WebSocketProvider>
-        <BrandingProvider>
-          <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-            <Pages />
-            <Toaster />
-          </ThemeProvider>
-        </BrandingProvider>
-      </WebSocketProvider>
+      <OrganizationProvider>
+        <WebSocketProvider>
+          <BrandingProvider>
+            <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+              <Pages />
+              <Toaster />
+            </ThemeProvider>
+          </BrandingProvider>
+        </WebSocketProvider>
+      </OrganizationProvider>
     </AuthProvider>
   )
 }
