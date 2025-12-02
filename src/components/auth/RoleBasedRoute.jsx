@@ -21,11 +21,18 @@ export default function RoleBasedRoute({ children, allowedRoles }) {
   }
 
   const userRoles = user.roles || [];
+  
+  // Master Admin has access to ALL routes - no restrictions
+  const isMasterAdmin = userRoles.includes('master_admin');
+  if (isMasterAdmin) {
+    // Master admin bypasses all route restrictions
+    return <>{children}</>;
+  }
 
   // Strict mode: drivers and monitors that are not also admins or dispatchers
   const isDriverStrict = userRoles.includes('driver') && !userRoles.includes('admin') && !userRoles.includes('dispatcher');
-  // Monitor should always be in strict mode regardless of other roles
-  const isMonitorStrict = userRoles.includes('monitor');
+  // Monitor strict mode only applies if they are ONLY a monitor (not also admin)
+  const isMonitorStrict = userRoles.includes('monitor') && !userRoles.includes('admin') && !userRoles.includes('dispatcher');
 
   // Drivers may only visit the Driver Dashboard and Help pages
   if (isDriverStrict) {
@@ -37,7 +44,7 @@ export default function RoleBasedRoute({ children, allowedRoles }) {
     }
   }
 
-  // Monitors may only visit the TV Monitor page
+  // Monitors may only visit the TV Monitor page (unless they also have admin/dispatcher roles)
   if (isMonitorStrict) {
     const allowedPaths = ['/TVMonitor'];
     const isAllowed = allowedPaths.some(p => location.pathname.toLowerCase().startsWith(p.toLowerCase()));

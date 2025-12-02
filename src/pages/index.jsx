@@ -73,7 +73,7 @@ function PagesContent() {
             <Routes>            
                 
                     <Route path="/" element={
-                        <RoleBasedRoute allowedRoles={['admin', 'dispatcher']}>
+                        <RoleBasedRoute allowedRoles={['master_admin', 'admin', 'dispatcher']}>
                             <Dashboard />
                         </RoleBasedRoute>
                     } />
@@ -81,25 +81,25 @@ function PagesContent() {
                 
                 
                 <Route path="/Dashboard" element={
-                    <RoleBasedRoute allowedRoles={['admin', 'dispatcher']}>
+                    <RoleBasedRoute allowedRoles={['master_admin', 'admin', 'dispatcher']}>
                         <Dashboard />
                     </RoleBasedRoute>
                 } />
                 
                 <Route path="/GuestPortal" element={
-                    <RoleBasedRoute allowedRoles={['admin', 'dispatcher']}>
+                    <RoleBasedRoute allowedRoles={['master_admin', 'admin', 'dispatcher']}>
                         <GuestPortal />
                     </RoleBasedRoute>
                 } />
                 
                 <Route path="/DriverDashboard" element={
-                    <RoleBasedRoute allowedRoles={['admin', 'driver']}>
+                    <RoleBasedRoute allowedRoles={['master_admin', 'admin', 'driver']}>
                         <DriverDashboard />
                     </RoleBasedRoute>
                 } />
                 
                 <Route path="/DispatcherControl" element={
-                    <RoleBasedRoute allowedRoles={['admin', 'dispatcher']}>
+                    <RoleBasedRoute allowedRoles={['master_admin', 'admin', 'dispatcher']}>
                         <DispatcherControl />
                     </RoleBasedRoute>
                 } />
@@ -111,25 +111,25 @@ function PagesContent() {
                 } />
                 
                 <Route path="/TVMonitor" element={
-                    <RoleBasedRoute allowedRoles={['monitor']}>
+                    <RoleBasedRoute allowedRoles={['master_admin', 'admin', 'dispatcher', 'monitor']}>
                         <TVMonitor />
                     </RoleBasedRoute>
                 } />
                 
                 <Route path="/Admin" element={
-                    <RoleBasedRoute allowedRoles={['admin']}>
+                    <RoleBasedRoute allowedRoles={['master_admin', 'admin']}>
                         <Admin />
                     </RoleBasedRoute>
                 } />
                 
                 <Route path="/Help" element={
-                    <RoleBasedRoute allowedRoles={['admin', 'dispatcher', 'driver']}>
+                    <RoleBasedRoute allowedRoles={['master_admin', 'admin', 'dispatcher', 'driver']}>
                         <Help />
                     </RoleBasedRoute>
                 } />
                 
                 <Route path="/Documentation" element={
-                    <RoleBasedRoute allowedRoles={['admin']}>
+                    <RoleBasedRoute allowedRoles={['master_admin', 'admin']}>
                         <Documentation />
                     </RoleBasedRoute>
                 } />

@@ -374,8 +374,8 @@ export default function Layout({ children, currentPageName }) {
 
   const mobileUserInitial = currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U';
 
-  const isDriverStrict = currentUser?.roles?.includes('driver') && !currentUser?.roles?.includes('admin') && !currentUser?.roles?.includes('dispatcher');
-  const isMonitorStrict = currentUser?.roles?.includes('monitor');
+  const isDriverStrict = currentUser?.roles?.includes('driver') && !currentUser?.roles?.includes('master_admin') && !currentUser?.roles?.includes('admin') && !currentUser?.roles?.includes('dispatcher');
+  const isMonitorStrict = currentUser?.roles?.includes('monitor') && !currentUser?.roles?.includes('master_admin') && !currentUser?.roles?.includes('admin') && !currentUser?.roles?.includes('dispatcher');
 
   // STRICT MODE LAYOUT (Driver & Monitor)
   if (isDriverStrict || isMonitorStrict) {
